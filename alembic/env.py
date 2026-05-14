@@ -6,6 +6,7 @@ from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from alembic import context
+from src.surfaced.auth.models import User  # noqa: F401
 from src.surfaced.core.config import settings
 from src.surfaced.core.database import Base
 
