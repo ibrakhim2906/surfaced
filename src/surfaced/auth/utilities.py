@@ -4,10 +4,12 @@ from typing import Any
 import jwt
 from passlib.context import CryptContext
 
-from surfaced.auth.schemas import TokenPayload
-from surfaced.core.config import settings
+from src.surfaced.auth.schemas import TokenPayload
+from src.surfaced.core.config import settings
 
 crypt_context = CryptContext(schemes=["argon2"], deprecated="auto")
+
+DUMMY_HASH: str = crypt_context.hash("dummy")
 
 
 def hash_password(password: str) -> str:
