@@ -4,8 +4,8 @@ from typing import Any
 import jwt
 from passlib.context import CryptContext
 
-from src.surfaced.auth.schemas import TokenPayload
-from src.surfaced.core.config import settings
+from surfaced.auth.schemas import TokenPayload
+from surfaced.core.config import settings
 
 crypt_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
