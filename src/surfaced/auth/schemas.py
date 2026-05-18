@@ -36,6 +36,10 @@ class UserResponse(BaseModel):
     created_at: datetime
 
 
+class UserUpdate(BaseModel):
+    full_name: str | None = None
+
+
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str

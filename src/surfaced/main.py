@@ -1,8 +1,18 @@
 from fastapi import FastAPI
 
-app = FastAPI()
+from src.surfaced.auth.router import router as auth_router
+from surfaced.core.config import settings
 
 
-@app.get("/health")
-async def health() -> dict[str, str]:
-    return {"status": "ok"}
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title=settings.APP_NAME,
+        debug=settings.ENVIRONMENT == "local",
+    )
+
+    app.include_router(auth_router, prefix=settings.API_V1_STR)
+
+    return app
+
+
+app = create_app()

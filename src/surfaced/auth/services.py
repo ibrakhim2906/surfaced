@@ -17,6 +17,7 @@ from surfaced.auth.schemas import (
     TokenResponse,
     UserLogin,
     UserRegister,
+    UserUpdate,
 )
 from surfaced.auth.utilities import (
     DUMMY_HASH,
@@ -101,6 +102,13 @@ async def change_password(
     current_user.password_hash = hash_password(data.new_password)
 
     await db.commit()
+
+
+async def update_user(db: AsyncSession, current_user: User, data: UserUpdate) -> User:
+    if data.full_name is not None:
+        current_user.full_name = data.full_name
+    await db.commit()
+    return current_user
 
 
 async def logout_user() -> None:

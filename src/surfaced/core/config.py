@@ -12,6 +12,8 @@ class Settings(BaseSettings):
         env_file=str(ROOT_DIR / ".env"), env_ignore_empty=True, extra="ignore"
     )
 
+    APP_NAME: str = "Surfaced"
+
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
