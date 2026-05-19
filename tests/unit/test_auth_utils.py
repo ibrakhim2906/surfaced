@@ -27,7 +27,7 @@ def test_verify_password():
 
 def test_verify_password_false():
     hashed = hash_password("test123")
-    assert verify_password("test123", hashed) is False
+    assert verify_password("wrongpassword", hashed) is False
 
 
 def test_create_access_token():
