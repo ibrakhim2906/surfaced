@@ -6,8 +6,6 @@ from jwt import ExpiredSignatureError, InvalidTokenError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.surfaced.auth.utilities import decode_token
-from src.surfaced.core.database import get_db
 from surfaced.auth.constants import TOKEN_TYPE_ACCESS
 from surfaced.auth.exceptions import (
     InactiveUserException,
@@ -16,6 +14,8 @@ from surfaced.auth.exceptions import (
     UserNotFoundException,
 )
 from surfaced.auth.models import User
+from surfaced.auth.utilities import decode_token
+from surfaced.core.database import get_db
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 

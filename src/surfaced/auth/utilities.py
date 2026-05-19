@@ -4,8 +4,8 @@ from typing import Any
 import jwt
 from passlib.context import CryptContext
 
-from src.surfaced.auth.schemas import TokenPayload
-from src.surfaced.core.config import settings
+from surfaced.auth.schemas import TokenPayload
+from surfaced.core.config import settings
 
 crypt_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
@@ -18,7 +18,7 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(password: str, password_hash: str) -> bool:
-    return crypt_context.verify(password, password_hash)
+    return bool(crypt_context.verify(password, password_hash))
 
 
 def create_access_token(subject: str) -> str:

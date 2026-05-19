@@ -3,7 +3,7 @@ from collections.abc import AsyncIterator
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
-from src.surfaced.core.config import settings
+from surfaced.core.config import settings
 
 engine = create_async_engine(str(settings.SQLALCHEMY_DATABASE_URI))
 

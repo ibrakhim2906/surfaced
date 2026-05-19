@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.surfaced.core.database import Base
+from surfaced.core.database import Base
 
 
 class User(Base):

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from src.surfaced.auth.router import router as auth_router
+from surfaced.auth.router import router as auth_router
 from surfaced.core.config import settings
 
 

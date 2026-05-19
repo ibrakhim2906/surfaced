@@ -6,9 +6,9 @@ from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from alembic import context
-from src.surfaced.auth.models import User  # noqa: F401
-from src.surfaced.core.config import settings
-from src.surfaced.core.database import Base
+from surfaced.auth.models import User  # noqa: F401
+from surfaced.core.config import settings
+from surfaced.core.database import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
