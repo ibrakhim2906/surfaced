@@ -29,6 +29,9 @@ jobs:
       - uses: astral-sh/setup-uv@v5
       - run: uv sync --all-extras
       - run: uv pip install -e .
+      - run: psql -U postgres -h localhost -c "CREATE DATABASE surfaced_test;"
+        env:
+          PGPASSWORD: postgres
       - run: uv run ruff check src/
       - run: uv run ruff format --check src/
       - run: uv run mypy src/
