@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -37,6 +38,8 @@ class JobFilters(BaseModel):
 
 
 class PaginatedJobResponse(BaseModel):
-    items: list[JobResponse]
+    model_config = ConfigDict(from_attributes=True)
+
+    items: Sequence[JobResponse]
     next_cursor: str | None = None
     has_more: bool
