@@ -43,3 +43,22 @@ class PaginatedJobResponse(BaseModel):
     items: Sequence[JobResponse]
     next_cursor: str | None = None
     has_more: bool
+
+
+class SavedJobResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    job_id: int
+    saved_at: datetime
+
+    job: JobResponse
+
+
+class PaginatedSavedJobResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    items: Sequence[SavedJobResponse]
+    next_cursor: int | None = None
+    has_more: bool

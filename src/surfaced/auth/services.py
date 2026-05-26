@@ -9,7 +9,6 @@ from surfaced.auth.exceptions import (
     InvalidCredentialsException,
     TokenExpiredException,
     TokenInvalidException,
-    UserNotFoundException,
 )
 from surfaced.auth.models import User
 from surfaced.auth.schemas import (
@@ -57,10 +56,7 @@ async def login_user(db: AsyncSession, user_in: UserLogin) -> TokenResponse:
         user_in.password, existing.password_hash if existing else DUMMY_HASH
     )
 
-    if not existing:
-        raise UserNotFoundException
-
-    if not check_password:
+    if not existing or not check_password:
         raise InvalidCredentialsException
 
     if not existing.is_active:

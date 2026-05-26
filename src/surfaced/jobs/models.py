@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import Index, String, func
+from sqlalchemy import ForeignKey, Index, String, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import ARRAY, TSVECTOR
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from surfaced.core.database import Base
 
@@ -29,3 +29,16 @@ class Job(Base):
     __table_args__ = (
         Index("idx_jobs_search_vector", "search_vector", postgresql_using="gin"),
     )
+
+
+class SavedJob(Base):
+    __tablename__ = "saved_jobs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    job_id: Mapped[int] = mapped_column(ForeignKey("jobs.id", ondelete="CASCADE"))
+    saved_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+    job: Mapped["Job"] = relationship("Job", lazy="joined")
+
+    __table_args__ = (UniqueConstraint("user_id", "job_id", name="uq_user_saved_jobs"),)
