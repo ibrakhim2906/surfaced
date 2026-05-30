@@ -1,3 +1,6 @@
+from contextlib import asynccontextmanager
+
+import redis.asyncio as redis
 from fastapi import FastAPI
 
 from surfaced.auth.routers import router as auth_router
@@ -5,10 +8,21 @@ from surfaced.core.config import settings
 from surfaced.jobs.routers import router as jobs_router
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+
+    app.state.redis = redis.from_url(settings.REDIS_URL, decode_responses=True)
+
+    yield
+
+    await app.state.redis.aclose()
+
+
 def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.APP_NAME,
         debug=settings.ENVIRONMENT == "local",
+        lifespan=lifespan,
     )
 
     app.include_router(auth_router, prefix=settings.API_V1_STR)

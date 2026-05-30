@@ -9,7 +9,10 @@ from alembic import context
 from surfaced.auth.models import User  # noqa: F401
 from surfaced.core.config import settings
 from surfaced.core.database import Base
-from surfaced.jobs.models import Job  # noqa: F401
+from surfaced.jobs.models import (
+    Job,  # noqa: F401
+    SavedJob,  # noqa: F401
+)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
