@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status
 
 import surfaced.jobs.services as service
-from surfaced.auth.dependencies import DbSession
+from surfaced.auth.dependencies import DbSession, RedisClient
 from surfaced.jobs.schemas import JobFilters, JobResponse, PaginatedJobResponse
 
 router = APIRouter(prefix="/jobs")
@@ -9,9 +9,11 @@ router = APIRouter(prefix="/jobs")
 
 @router.get("", status_code=status.HTTP_200_OK)
 async def get_jobs(
-    db: DbSession, filters: JobFilters = Depends()
+    db: DbSession, redis_client: RedisClient, filters: JobFilters = Depends()
 ) -> PaginatedJobResponse:
-    items, next_cursor, has_more = await service.get_multi_jobs(db, filters)
+    items, next_cursor, has_more = await service.get_multi_jobs(
+        db, redis_client, filters
+    )
 
     return PaginatedJobResponse.model_validate(
         {"items": items, "next_cursor": next_cursor, "has_more": has_more}

@@ -1,17 +1,40 @@
 import base64
+import json
 from collections.abc import Sequence
+from typing import Any
 
+from redis.asyncio import Redis
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from surfaced.core.redis import get_cache, set_cache
+from surfaced.jobs.constants import JOB_CACHE_TTL
 from surfaced.jobs.exceptions import JobNotFoundException
 from surfaced.jobs.models import Job
-from surfaced.jobs.schemas import JobFilters
+from surfaced.jobs.schemas import JobFilters, JobResponse
+from surfaced.jobs.utilities import create_cache_key, create_cache_payload
 
 
 async def get_multi_jobs(
-    db: AsyncSession, filters: JobFilters
-) -> tuple[Sequence[Job], str | None, bool]:
+    db: AsyncSession, redis_client: Redis, filters: JobFilters
+) -> tuple[Sequence[dict[str, Any]] | list[Any], str | None, bool]:
+
+    cache_key = create_cache_key(filters)
+
+    cached_data = await get_cache(redis_client, cache_key)
+
+    if cached_data is not None:
+        try:
+            json_cached_data = json.loads(cached_data)
+
+            return (
+                json_cached_data["items"],
+                json_cached_data["next_cursor"],
+                json_cached_data["has_more"],
+            )
+
+        except (json.JSONDecodeError, KeyError, TypeError):
+            pass
 
     query = select(Job).where(~Job.is_archived)
 
@@ -59,7 +82,17 @@ async def get_multi_jobs(
 
         next_cursor = base64.b64encode(last_seen_id.encode()).decode()
 
-    return (items, next_cursor, has_more)
+    serialized_items = [
+        JobResponse.model_validate(item).model_dump(mode="json") for item in items
+    ]
+
+    payload = create_cache_payload(
+        serialized_items=serialized_items, next_cursor=next_cursor, has_more=has_more
+    )
+
+    await set_cache(redis_client, cache_key, json.dumps(payload), ttl=JOB_CACHE_TTL)
+
+    return (serialized_items, next_cursor, has_more)
 
 
 async def get_job_by_id(db: AsyncSession, job_id: int) -> Job:

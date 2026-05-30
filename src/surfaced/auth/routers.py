@@ -1,7 +1,13 @@
 from fastapi import APIRouter, status
 
 import surfaced.auth.services as service
-from surfaced.auth.dependencies import CurrentUser, DbSession, RedisClient
+from surfaced.auth.dependencies import (
+    CurrentUser,
+    DbSession,
+    LoginLimiter,
+    RedisClient,
+    RegisterLimiter,
+)
 from surfaced.auth.schemas import (
     PasswordChange,
     TokenRefresh,
@@ -16,13 +22,17 @@ router = APIRouter(prefix="/auth")
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
-async def register(db: DbSession, user_in: UserRegister) -> UserResponse:
+async def register(
+    db: DbSession, user_in: UserRegister, rate_limit: RegisterLimiter
+) -> UserResponse:
     user = await service.register_user(db, user_in)
     return UserResponse.model_validate(user)
 
 
 @router.post("/login")
-async def login(db: DbSession, user_in: UserLogin) -> TokenResponse:
+async def login(
+    db: DbSession, user_in: UserLogin, rate_limit: LoginLimiter
+) -> TokenResponse:
     return await service.login_user(db, user_in)
 
 

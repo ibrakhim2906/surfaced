@@ -23,3 +23,8 @@ InactiveUserException = HTTPException(
 TokenInvalidException = HTTPException(
     status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
 )
+
+RateLimitExceededException = HTTPException(
+    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+    detail="Too many attempts. Please try again later",
+)
