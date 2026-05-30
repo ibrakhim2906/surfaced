@@ -1,3 +1,4 @@
+import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -26,6 +27,7 @@ def create_access_token(subject: str) -> str:
         sub=subject,
         exp=datetime.now(UTC) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
         type="access",
+        jti=str(uuid.uuid4()),
     )
 
     token = jwt.encode(
@@ -42,6 +44,7 @@ def create_refresh_token(subject: str) -> str:
         sub=subject,
         exp=datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
         type="refresh",
+        jti=str(uuid.uuid4()),
     )
 
     token = jwt.encode(

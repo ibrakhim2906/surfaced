@@ -1,4 +1,7 @@
+from datetime import UTC, datetime
+
 from jwt import ExpiredSignatureError, InvalidTokenError
+from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,6 +16,7 @@ from surfaced.auth.exceptions import (
 from surfaced.auth.models import User
 from surfaced.auth.schemas import (
     PasswordChange,
+    TokenRefresh,
     TokenResponse,
     UserLogin,
     UserRegister,
@@ -26,6 +30,7 @@ from surfaced.auth.utilities import (
     hash_password,
     verify_password,
 )
+from surfaced.core.redis import get_cache, set_cache
 
 
 async def register_user(db: AsyncSession, user_in: UserRegister) -> User:
@@ -68,9 +73,9 @@ async def login_user(db: AsyncSession, user_in: UserLogin) -> TokenResponse:
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
 
-async def refresh_token(refresh_token: str) -> TokenResponse:
+async def refresh_token(redis_client: Redis, token_in: TokenRefresh) -> TokenResponse:
     try:
-        payload = decode_token(refresh_token)
+        payload = decode_token(token_in.refresh_token)
     except ExpiredSignatureError:
         raise TokenExpiredException
     except InvalidTokenError:
@@ -79,9 +84,14 @@ async def refresh_token(refresh_token: str) -> TokenResponse:
     if payload.type != "refresh":
         raise TokenInvalidException
 
+    is_blocked = await get_cache(redis_client, f"blocklist:{payload.jti}")
+
+    if is_blocked:
+        raise TokenInvalidException
+
     return TokenResponse(
         access_token=create_access_token(subject=payload.sub),
-        refresh_token=refresh_token,
+        refresh_token=token_in.refresh_token,
         token_type=TOKEN_TYPE_BEARER,
     )
 
@@ -107,5 +117,19 @@ async def update_user(db: AsyncSession, current_user: User, data: UserUpdate) ->
     return current_user
 
 
-async def logout_user() -> None:
-    return None  # TODO implement refresh token invalidation
+async def logout_user(redis_client: Redis, token_in: TokenRefresh) -> None:
+    try:
+        payload = decode_token(token_in.refresh_token)
+    except (ExpiredSignatureError, InvalidTokenError):
+        return
+
+    now = datetime.now(UTC)
+
+    time_remaining = payload.exp - now
+
+    seconds_left = int(time_remaining.total_seconds())
+
+    if seconds_left > 0:
+        await set_cache(
+            redis_client, f"blocklist:{payload.jti}", "revoked", seconds_left
+        )

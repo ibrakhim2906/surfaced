@@ -50,3 +50,4 @@ class TokenPayload(BaseModel):
     sub: str
     exp: datetime
     type: str
+    jti: str

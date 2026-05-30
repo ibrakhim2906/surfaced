@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status
 
 import surfaced.auth.services as service
-from surfaced.auth.dependencies import CurrentUser, DbSession
+from surfaced.auth.dependencies import CurrentUser, DbSession, RedisClient
 from surfaced.auth.schemas import (
     PasswordChange,
     TokenRefresh,
@@ -27,13 +27,15 @@ async def login(db: DbSession, user_in: UserLogin) -> TokenResponse:
 
 
 @router.post("/token/refresh")
-async def refresh_token(token_in: TokenRefresh) -> TokenResponse:
-    return await service.refresh_token(token_in.refresh_token)
+async def refresh_token(
+    token_in: TokenRefresh, redis_client: RedisClient
+) -> TokenResponse:
+    return await service.refresh_token(redis_client, token_in)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-async def logout() -> None:
-    await service.logout_user()
+async def logout(token_in: TokenRefresh, redis_client: RedisClient) -> None:
+    await service.logout_user(redis_client, token_in)
 
 
 @router.patch("/password", status_code=status.HTTP_204_NO_CONTENT)

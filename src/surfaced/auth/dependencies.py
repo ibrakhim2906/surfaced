@@ -1,8 +1,9 @@
-from typing import Annotated
+from typing import Annotated, Any
 
-from fastapi import Depends
+from fastapi import Depends, Request
 from fastapi.security import OAuth2PasswordBearer
 from jwt import ExpiredSignatureError, InvalidTokenError
+from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -46,5 +47,13 @@ async def get_current_user(
     return existing
 
 
+def get_redis(request: Request) -> Redis:
+
+    state: Any = request.app.state
+
+    return state.redis
+
+
 DbSession = Annotated[AsyncSession, Depends(get_db)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
+RedisClient = Annotated[Redis, Depends(get_redis)]
