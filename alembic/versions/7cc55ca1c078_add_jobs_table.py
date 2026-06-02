@@ -50,8 +50,7 @@ def upgrade() -> None:
             NEW.search_vector :=
                 setweight(to_tsvector('english', coalesce(NEW.title, '')), 'A') ||
                 setweight(to_tsvector('english', coalesce(NEW.company, '')), 'B') ||
-                setweight(to_tsvector('english', coalesce(array_to_string(NEW.stack, ' '), '')), 'B') ||
-                setweight(to_tsvector('english', coalesce(NEW.title, '')), 'C');
+                setweight(to_tsvector('english', coalesce(array_to_string(NEW.stack, ' '), '')), 'B');
             RETURN NEW;
         END;
         $$ LANGUAGE plpgsql;

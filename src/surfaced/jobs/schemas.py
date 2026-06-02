@@ -27,9 +27,7 @@ class JobFilters(BaseModel):
         None, description="Filter jobs by specific location or remote status"
     )
 
-    limit: int = Field(
-        20, ge=1, le=100, description="Amount of jobs to be seen for user"
-    )
+    limit: int = Field(20, ge=1, le=100, description="Amount of jobs to be seen for user")
 
     cursor: str | None = Field(
         None,
@@ -60,5 +58,5 @@ class PaginatedSavedJobResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     items: Sequence[SavedJobResponse]
-    next_cursor: int | None = None
+    next_cursor: str | None = None
     has_more: bool

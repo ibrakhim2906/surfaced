@@ -3,6 +3,7 @@ from collections.abc import AsyncGenerator
 import pytest
 from httpx import ASGITransport, AsyncClient
 from redis.asyncio import Redis
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
@@ -26,9 +27,41 @@ async def test_engine():
     engine = create_async_engine(TEST_DATABASE_URL)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+        await conn.execute(
+            text("""
+                CREATE OR REPLACE FUNCTION jobs_search_vector_trigger()
+                RETURNS TRIGGER AS $$
+                BEGIN
+                    NEW.search_vector :=
+                        setweight(to_tsvector('english',
+                        coalesce(NEW.title, '')), 'A') ||
+                        setweight(to_tsvector('english',
+                        coalesce(NEW.company, '')), 'B') ||
+                        setweight(to_tsvector('english',
+                        coalesce(array_to_string(NEW.stack, ' '), '')), 'B');
+                    RETURN NEW;
+                END;
+                $$ LANGUAGE plpgsql;
+            """)
+        )
+
+        await conn.execute(text("DROP TRIGGER IF EXISTS tsvectorupdate ON jobs;"))
+
+        await conn.execute(
+            text("""
+                CREATE TRIGGER tsvectorupdate BEFORE INSERT OR UPDATE
+                ON jobs FOR EACH ROW
+                EXECUTE FUNCTION jobs_search_vector_trigger();
+            """)
+        )
     yield engine
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+
+        await conn.execute(text("DROP TRIGGER IF EXISTS vsvectorupdate ON jobs;"))
+
+        await conn.execute(text("DROP FUNCTION IF EXISTS jobs_search_vector_trigger();"))
     await engine.dispose()
 
 

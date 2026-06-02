@@ -42,7 +42,7 @@ dev = [
 where = ["src"]
 
 [tool.ruff]
-line-length = 88
+line-length = 90
 exclude = ["alembic/versions/*"]
 
 [tool.ruff.lint]
