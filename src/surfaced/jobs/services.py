@@ -1,4 +1,3 @@
-import base64
 import json
 from collections.abc import Sequence
 from typing import Any
@@ -12,7 +11,12 @@ from surfaced.jobs.constants import JOB_CACHE_TTL
 from surfaced.jobs.exceptions import JobNotFoundException
 from surfaced.jobs.models import Job
 from surfaced.jobs.schemas import JobFilters, JobResponse
-from surfaced.jobs.utilities import create_cache_key, create_cache_payload
+from surfaced.jobs.utilities import (
+    create_cache_key,
+    create_cache_payload,
+    next_cursor_b64_decode,
+    next_cursor_b64_encode,
+)
 
 
 async def get_multi_jobs(
@@ -53,7 +57,7 @@ async def get_multi_jobs(
     if filters.cursor:
         try:
             cursor_bytes = filters.cursor.encode()
-            last_seen_id = base64.b64decode(cursor_bytes).decode()
+            last_seen_id = next_cursor_b64_decode(cursor_bytes)
 
             last_seen_id = int(last_seen_id)
 
@@ -80,7 +84,7 @@ async def get_multi_jobs(
         last_seen_id = items[-1].id
         last_seen_id = str(last_seen_id)
 
-        next_cursor = base64.b64encode(last_seen_id.encode()).decode()
+        next_cursor = next_cursor_b64_encode(last_seen_id)
 
     serialized_items = [
         JobResponse.model_validate(item).model_dump(mode="json") for item in items

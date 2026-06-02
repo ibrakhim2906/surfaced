@@ -2,12 +2,14 @@ from collections.abc import AsyncGenerator
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
 
+from surfaced.auth.dependencies import get_redis
 from surfaced.core.config import settings
 from surfaced.core.database import Base, get_db
 from surfaced.main import app
@@ -42,13 +44,30 @@ async def db_session(test_engine):
 
 
 @pytest.fixture(scope="function")
-async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+async def redis_client() -> AsyncGenerator[Redis, None]:
+
+    client = Redis(host="localhost", port=6379, db=1, decode_responses=True)
+
+    await client.flushdb()
+
+    yield client
+
+    await client.close()
+
+
+@pytest.fixture(scope="function")
+async def client(
+    db_session: AsyncSession, redis_client: Redis
+) -> AsyncGenerator[AsyncClient, None]:
 
     async def override_get_db():
         yield db_session
 
-    app.dependency_overrides[get_db] = override_get_db
+    async def override_get_redis():
+        return redis_client
 
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_redis] = override_get_redis
     async with AsyncClient(
         base_url="http://test", transport=ASGITransport(app=app)
     ) as async_client:
