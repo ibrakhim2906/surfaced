@@ -43,6 +43,12 @@ class PaginatedJobResponse(BaseModel):
     has_more: bool
 
 
+class SavedJobRequest(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    job_id: int
+
+
 class SavedJobResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

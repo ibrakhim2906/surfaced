@@ -2,15 +2,18 @@ import json
 from collections.abc import Sequence
 from typing import Any
 
+from fastapi import HTTPException, status
 from redis.asyncio import Redis
-from sqlalchemy import desc, func, select
+from sqlalchemy import delete, desc, func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from surfaced.auth.dependencies import CurrentUser
 from surfaced.core.redis import get_cache, set_cache
 from surfaced.jobs.constants import JOB_CACHE_TTL
 from surfaced.jobs.exceptions import JobNotFoundException
-from surfaced.jobs.models import Job
-from surfaced.jobs.schemas import JobFilters, JobResponse
+from surfaced.jobs.models import Job, SavedJob
+from surfaced.jobs.schemas import JobFilters, JobResponse, SavedJobRequest
 from surfaced.jobs.utilities import (
     create_cache_key,
     create_cache_payload,
@@ -111,3 +114,55 @@ async def get_job_by_id(db: AsyncSession, job_id: int) -> Job:
         raise JobNotFoundException(None)
 
     return job
+
+
+async def me_save_job(
+    db: AsyncSession, current_user: CurrentUser, saved_job: SavedJobRequest
+):
+
+    new_save = SavedJob(user_id=current_user.id, job_id=saved_job.job_id)
+    db.add(new_save)
+
+    try:
+        await db.commit()
+        await db.refresh(new_save)
+        return new_save
+    except IntegrityError:
+        await db.rollback()
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="you have already saved this job",
+        )
+
+
+async def me_unsave_job(
+    db: AsyncSession, current_user: CurrentUser, saved_job: SavedJobRequest
+):
+
+    query = (
+        delete(SavedJob)
+        .where(SavedJob.user_id == current_user.id, SavedJob.job_id == saved_job.job_id)
+        .returning(SavedJob.id)
+    )
+
+    result = await db.execute(query)
+    await db.commit()
+
+    result = result.scalar_one_or_none()
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="saved job record not found"
+        )
+
+
+async def list_saved_jobs(db: AsyncSession, current_user: CurrentUser):
+    query = (
+        select(SavedJob)
+        .where(SavedJob.user_id == current_user.id, ~Job.is_archived)
+        .order_by(SavedJob.saved_at)
+    )
+
+    result = await db.execute(query)
+
+    return result.scalars().all()
