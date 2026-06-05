@@ -60,9 +60,7 @@ class SavedJobResponse(BaseModel):
     job: JobResponse
 
 
-class PaginatedSavedJobResponse(BaseModel):
+class ListSavedJobResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     items: Sequence[SavedJobResponse]
-    next_cursor: str | None = None
-    has_more: bool
