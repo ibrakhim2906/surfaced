@@ -40,11 +40,9 @@ async def me_save_job(
     return SavedJobResponse.model_validate(response)
 
 
-@router.delete("/me/saved", status_code=status.HTTP_204_NO_CONTENT)
-async def me_unsave_job(
-    request: SavedJobRequest, db: DbSession, current_user: CurrentUser
-) -> None:
-    _ = await service.me_unsave_job(db, current_user, request)
+@router.delete("/me/saved/{job_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def me_unsave_job(db: DbSession, current_user: CurrentUser, job_id: int) -> None:
+    _ = await service.me_unsave_job(db, current_user, job_id)
 
 
 @router.get("/me/saved", status_code=status.HTTP_200_OK)
@@ -53,4 +51,4 @@ async def me_show_saved_jobs(
 ) -> ListSavedJobResponse:
     response = await service.list_saved_jobs(db, current_user)
 
-    return ListSavedJobResponse.model_validate(response)
+    return ListSavedJobResponse.model_validate({"items": response})

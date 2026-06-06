@@ -136,13 +136,11 @@ async def me_save_job(
         )
 
 
-async def me_unsave_job(
-    db: AsyncSession, current_user: CurrentUser, saved_job: SavedJobRequest
-):
+async def me_unsave_job(db: AsyncSession, current_user: CurrentUser, job_id: int):
 
     query = (
         delete(SavedJob)
-        .where(SavedJob.user_id == current_user.id, SavedJob.job_id == saved_job.job_id)
+        .where(SavedJob.user_id == current_user.id, SavedJob.job_id == job_id)
         .returning(SavedJob.id)
     )
 
@@ -159,6 +157,7 @@ async def me_unsave_job(
 async def list_saved_jobs(db: AsyncSession, current_user: CurrentUser):
     query = (
         select(SavedJob)
+        .join(Job, SavedJob.job_id == Job.id)
         .where(SavedJob.user_id == current_user.id, ~Job.is_archived)
         .order_by(SavedJob.saved_at)
     )

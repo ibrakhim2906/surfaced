@@ -3,7 +3,7 @@ from collections.abc import AsyncGenerator
 import pytest
 from httpx import ASGITransport, AsyncClient
 from redis.asyncio import Redis
-from sqlalchemy import text
+from sqlalchemy import insert, text
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import (
 from surfaced.auth.dependencies import get_redis
 from surfaced.core.config import settings
 from surfaced.core.database import Base, get_db
+from surfaced.jobs.models import Job
 from surfaced.main import app
 
 TEST_DATABASE_URL = (
@@ -133,3 +134,37 @@ async def authenticated_client(
     client.headers["Authorization"] = f"Bearer {token}"
 
     yield client
+
+
+TEST_JOBS_DATA = [
+    {
+        "title": "Junior Python Developer",
+        "company": "PythonDevs",
+        "location": "Remote",
+        "description": "Know separate library for every case",
+        "stack": ["Python", "FastAPI"],
+        "source": "linkedin",
+        "source_url": "https://linkedin.com/jobs/fake-python-123",
+        "is_archived": False,
+    },
+    {
+        "title": "Senior Go Developer",
+        "company": "GoDevs",
+        "location": "San Francisco",
+        "description": "Go all the way",
+        "stack": ["Go", "Postgres"],
+        "source": "ycombinator",
+        "source_url": "https://www.ycombinator.com/jobs/fake-go-id-456",
+        "is_archived": False,
+    },
+]
+
+
+@pytest.fixture(scope="function")
+async def seed_jobs(db_session: AsyncSession) -> list[Job]:
+
+    result = await db_session.execute(insert(Job).values(TEST_JOBS_DATA).returning(Job))
+
+    await db_session.flush()
+
+    return list(result.scalars().all())
