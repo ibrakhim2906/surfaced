@@ -42,5 +42,9 @@ class Settings(BaseSettings):
             path=self.POSTGRES_DB,
         )
 
+    HH_ACCESS_TOKEN: str = ""
+
+    YOUR_EMAIL: str = ""
+
 
 settings = Settings()
