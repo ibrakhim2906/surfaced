@@ -21,6 +21,7 @@ class Job(Base):
     stack: Mapped[list[str]] = mapped_column(ARRAY(String), default=[])
     source: Mapped[str] = mapped_column()
     source_url: Mapped[str] = mapped_column(unique=True)
+    source_id: Mapped[str | None] = mapped_column(nullable=True)
     posted_at: Mapped[datetime | None] = mapped_column()
     is_archived: Mapped[bool] = mapped_column(default=False)
     search_vector: Mapped[Any | None] = mapped_column(TSVECTOR, nullable=True)

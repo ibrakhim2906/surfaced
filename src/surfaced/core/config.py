@@ -42,8 +42,9 @@ class Settings(BaseSettings):
             path=self.POSTGRES_DB,
         )
 
-    HH_ACCESS_TOKEN: str = ""
-
+    HH_CLIENT_SECRET: str = ""
+    HH_CLIENT_ID: str = ""
+    HH_APPLICATION_TOKEN: str = ""
     YOUR_EMAIL: str = ""
 
 
