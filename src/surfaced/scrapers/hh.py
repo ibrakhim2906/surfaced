@@ -3,6 +3,7 @@ import re
 from html.parser import HTMLParser
 from typing import Any
 
+import structlog
 from httpx import AsyncClient, HTTPError
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
@@ -14,6 +15,8 @@ from surfaced.jobs.schemas import HHScrapeVacancySchema
 from surfaced.scrapers import hh
 from surfaced.scrapers.hh_exceptions import HHFetchError
 from surfaced.scrapers.tech_stack_constant import TECH_MAP
+
+logger = structlog.get_logger(__name__)
 
 HH_VACANCIES_URL = "https://api.hh.kz/vacancies"
 HH_TOKEN_URL = "https://api.hh.kz/token"
@@ -96,16 +99,14 @@ async def scrape_hh_vacancies() -> list[Any]:
                             parsed_data.append(mapped_item)
 
                         except Exception as e:
-                            print(f"[HH] skipped vacancy id={item.get('id')}: {e}")
+                            logger.warning("hh_vacancy_skipped", vacancy_id=item.get("id"), error=str(e))
                             continue
 
                     if page >= (data.get("pages", 1) - 1):
                         break
 
             except HTTPError as e:
-                print(
-                    f"[HH] page {page} HTTP error: {e.response.status_code} — {e.response.text[:300]}"
-                )
+                logger.warning("hh_page_http_error", page=page, status=e.response.status_code, body=e.response.text[:300])
                 continue
 
             await asyncio.sleep(1)
@@ -206,8 +207,8 @@ async def enrich_vacancies(session: AsyncSession):
     async with AsyncClient(timeout=10) as client:
         try:
             token = await _get_hh_access_token(client)
-        except RuntimeError:
-            # TODO log
+        except RuntimeError as e:
+            logger.error("hh_token_fetch_failed", error=str(e))
             return
 
         headers = {"Authorization": f"Bearer {token}", "User-Agent": USER_AGENT}

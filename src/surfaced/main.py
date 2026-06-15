@@ -8,7 +8,10 @@ from fastapi.responses import JSONResponse
 
 from surfaced.auth.routers import router as auth_router
 from surfaced.core.config import settings
+from surfaced.core.logging import setup_logging
 from surfaced.jobs.routers import router as jobs_router
+
+setup_logging()
 
 if settings.SENTRY_DSN:
     sentry_sdk.init(

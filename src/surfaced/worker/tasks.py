@@ -1,8 +1,15 @@
 import asyncio
 
+import structlog
+
 from surfaced.core.database import async_session_factory
+from surfaced.core.logging import setup_logging
 from surfaced.scrapers.hh import enrich_vacancies, load_jobs, scrape_hh_vacancies
 from surfaced.worker.celery_app import celery_app
+
+setup_logging()
+
+logger = structlog.get_logger(__name__)
 
 
 @celery_app.task(name="scrape_and_load_hh_vacancies", bind=True, max_retries=3)
@@ -15,7 +22,7 @@ def task_scrape_and_load_hh_vacancies(self) -> int | None:
         except Exception as e:
             return e, None
 
-        print(f"--- DEBUG: HeadHunter API returned {len(jobs_data)} total items ---")
+        logger.info("hh_scrape_complete", total=len(jobs_data))
 
         if not jobs_data:
             return None, 0
@@ -23,7 +30,7 @@ def task_scrape_and_load_hh_vacancies(self) -> int | None:
         async with async_session_factory() as session:
             result = await load_jobs(session, jobs_data)
 
-            print(f"--- DEBUG: Database session loaded {result} items ---")
+            logger.info("hh_load_complete", loaded=result)
             return None, result
 
     error, result = asyncio.run(scrape_pipeline())
