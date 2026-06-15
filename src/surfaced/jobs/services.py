@@ -57,6 +57,9 @@ async def get_multi_jobs(
     if filters.location:
         query = query.where(func.lower(Job.location) == (func.lower(filters.location)))
 
+    if filters.source:
+        query = query.where(Job.source == filters.source)
+
     if filters.cursor:
         try:
             cursor_bytes = filters.cursor.encode()

@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class JobResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+    id: int
     title: str
     company: str
     location: str | None
@@ -26,6 +27,10 @@ class JobFilters(BaseModel):
 
     location: str | None = Field(
         None, description="Filter jobs by specific location or remote status"
+    )
+
+    source: str | None = Field(
+        None, description="Filter by source: headhunter or telegram"
     )
 
     limit: int = Field(20, ge=1, le=100, description="Amount of jobs to be seen for user")
