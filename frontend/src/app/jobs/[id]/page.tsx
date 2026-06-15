@@ -60,7 +60,7 @@ export default function JobDetailPage() {
   }
 
   const isSaved = savedJobIds.has(job.id);
-  const salary = formatSalary(job.salary_min, job.salary_max);
+  const salary = formatSalary(job.salary_min, job.salary_max, job.salary_currency);
   const timeAgo = formatTimeAgo(job.posted_at);
   const PREVIEW_LENGTH = 600;
   const longDesc = job.description.length > PREVIEW_LENGTH;

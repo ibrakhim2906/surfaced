@@ -27,7 +27,7 @@ function SourceBadge({ source }: { source: string }) {
 export function JobCard({ job }: { job: Job }) {
   const { savedJobIds, toggleSave } = useAuth();
   const isSaved = savedJobIds.has(job.id);
-  const salary = formatSalary(job.salary_min, job.salary_max);
+  const salary = formatSalary(job.salary_min, job.salary_max, job.salary_currency);
   const timeAgo = formatTimeAgo(job.posted_at);
   const visibleStack = job.stack.slice(0, MAX_BADGES);
   const extraCount = job.stack.length - MAX_BADGES;

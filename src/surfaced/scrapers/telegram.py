@@ -20,9 +20,16 @@ MESSAGES_LIMIT = 100
 _SALARY_RE = re.compile(
     r"(?:от|зп|salary|зарплата|оплата)[:\s]*"
     r"(\d[\d\s]{2,})"
-    r"(?:\s*[-–—]\s*(\d[\d\s]{2,}))?",
+    r"(?:\s*[-–—]\s*(\d[\d\s]{2,}))?"
+    r"(?:\s*([$€₸]|usd|eur|kzt|тг|тенге|\$))?",
     re.IGNORECASE,
 )
+
+_CURRENCY_SYMBOLS: dict[str, str] = {
+    "$": "USD", "usd": "USD",
+    "€": "EUR", "eur": "EUR",
+    "₸": "KZT", "kzt": "KZT", "тг": "KZT", "тенге": "KZT",
+}
 
 _LOCATION_KEYWORDS: dict[str, str] = {
     "алматы": "Алматы",
@@ -41,16 +48,18 @@ _LOCATION_KEYWORDS: dict[str, str] = {
 _NOISE_RE = re.compile(r"[^\w\s\+#\.\-]")
 
 
-def _extract_salary(text: str) -> tuple[int | None, int | None]:
+def _extract_salary(text: str) -> tuple[int | None, int | None, str]:
     m = _SALARY_RE.search(text)
     if not m:
-        return None, None
+        return None, None, "KZT"
     try:
         low = int(re.sub(r"\s", "", m.group(1)))
         high = int(re.sub(r"\s", "", m.group(2))) if m.group(2) else None
-        return low, high
+        currency_raw = (m.group(3) or "").lower().strip()
+        currency = _CURRENCY_SYMBOLS.get(currency_raw, "KZT")
+        return low, high, currency
     except (ValueError, TypeError):
-        return None, None
+        return None, None, "KZT"
 
 
 def _extract_location(text: str) -> str | None:
@@ -84,7 +93,7 @@ def _message_to_db_dict(msg: Message, channel: str) -> dict[str, Any] | None:
     if not text or len(text) < 30:
         return None
 
-    salary_min, salary_max = _extract_salary(text)
+    salary_min, salary_max, salary_currency = _extract_salary(text)
     posted_at = msg.date.replace(tzinfo=None) if msg.date else None
 
     return {
@@ -94,6 +103,7 @@ def _message_to_db_dict(msg: Message, channel: str) -> dict[str, Any] | None:
         "location": _extract_location(text),
         "salary_min": salary_min,
         "salary_max": salary_max,
+        "salary_currency": salary_currency,
         "description": text,
         "stack": _extract_stack(text),
         "source": "telegram",

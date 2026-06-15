@@ -14,6 +14,7 @@ class JobResponse(BaseModel):
     location: str | None
     salary_min: int | None
     salary_max: int | None
+    salary_currency: str
     description: str
     stack: list[str]
     source: str
@@ -102,10 +103,12 @@ class HHScrapeVacancySchema(BaseModel):
 
         salary_min = None
         salary_max = None
+        salary_currency = "KZT"
 
         if self.salary:
             salary_min = self.salary.get("from")
             salary_max = self.salary.get("to")
+            salary_currency = self.salary.get("currency", "KZT")
 
         company_name = self.employer.get("name", "Unknown Company")
         location_name = self.area.get("name", "Unknown Location")
@@ -128,6 +131,7 @@ class HHScrapeVacancySchema(BaseModel):
             "location": location_name,
             "salary_min": salary_min,
             "salary_max": salary_max,
+            "salary_currency": salary_currency,
             "description": fallback_description,
             "stack": detected_stack,
             "source": "headhunter",

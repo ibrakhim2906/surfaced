@@ -1,16 +1,24 @@
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  KZT: "₸",
+  USD: "$",
+  EUR: "€",
+};
+
 export function formatSalary(
   min: number | null,
-  max: number | null
+  max: number | null,
+  currency = "KZT"
 ): string | null {
   if (!min && !max) return null;
+  const sym = CURRENCY_SYMBOLS[currency] ?? currency;
   const fmt = (n: number) => {
     if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
     if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
     return n.toLocaleString();
   };
-  if (min && max) return `${fmt(min)} – ${fmt(max)} ₸`;
-  if (min) return `от ${fmt(min)} ₸`;
-  return `до ${fmt(max!)} ₸`;
+  if (min && max) return `${fmt(min)} – ${fmt(max)} ${sym}`;
+  if (min) return `от ${fmt(min)} ${sym}`;
+  return `до ${fmt(max!)} ${sym}`;
 }
 
 export function formatTimeAgo(dateStr: string | null): string {

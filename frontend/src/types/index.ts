@@ -5,6 +5,7 @@ export interface Job {
   location: string | null;
   salary_min: number | null;
   salary_max: number | null;
+  salary_currency: string;
   description: string;
   stack: string[];
   source: string;

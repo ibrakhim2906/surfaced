@@ -17,6 +17,7 @@ class Job(Base):
     location: Mapped[str | None] = mapped_column()
     salary_min: Mapped[int | None] = mapped_column()
     salary_max: Mapped[int | None] = mapped_column()
+    salary_currency: Mapped[str] = mapped_column(default="KZT", server_default="KZT")
     description: Mapped[str] = mapped_column()
     stack: Mapped[list[str]] = mapped_column(ARRAY(String), default=[])
     source: Mapped[str] = mapped_column()
