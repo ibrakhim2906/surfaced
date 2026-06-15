@@ -47,5 +47,7 @@ class Settings(BaseSettings):
     HH_APPLICATION_TOKEN: str = ""
     YOUR_EMAIL: str = ""
 
+    SENTRY_DSN: str = ""
+
 
 settings = Settings()

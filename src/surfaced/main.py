@@ -1,12 +1,20 @@
 from contextlib import asynccontextmanager
 
 import redis.asyncio as redis
+import sentry_sdk
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
 from surfaced.auth.routers import router as auth_router
 from surfaced.core.config import settings
 from surfaced.jobs.routers import router as jobs_router
+
+if settings.SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=settings.SENTRY_DSN,
+        environment=settings.ENVIRONMENT,
+        traces_sample_rate=0.1,
+    )
 
 
 @asynccontextmanager
