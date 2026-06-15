@@ -38,3 +38,10 @@ jobs:
       - run: uv run pytest --cov=src tests/
       - run: uv run bandit -r src/ -ll
       - run: uv run pip-audit
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t surfaced:ci .
