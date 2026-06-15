@@ -1,5 +1,5 @@
 import re
-from datetime import timezone
+
 from typing import Any
 
 import structlog
@@ -85,7 +85,7 @@ def _message_to_db_dict(msg: Message, channel: str) -> dict[str, Any] | None:
         return None
 
     salary_min, salary_max = _extract_salary(text)
-    posted_at = msg.date.replace(tzinfo=timezone.utc) if msg.date else None
+    posted_at = msg.date.replace(tzinfo=None) if msg.date else None
 
     return {
         "source_id": f"tg_{channel}_{msg.id}",
