@@ -1,7 +1,8 @@
+import json
 from pathlib import Path
 from typing import Literal
 
-from pydantic import PostgresDsn, computed_field, field_validator
+from pydantic import Field, PostgresDsn, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT_DIR = Path(__file__).parent.parent.parent.parent
@@ -54,14 +55,19 @@ class Settings(BaseSettings):
     TELEGRAM_SESSION_STRING: str = ""
     TELEGRAM_CHANNELS: list[str] = ["devkz_jobs", "workitkz"]
 
-    CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+    CORS_ORIGINS_RAW: str = Field("http://localhost:3000", alias="CORS_ORIGINS")
 
-    @field_validator("CORS_ORIGINS", mode="before")
-    @classmethod
-    def parse_cors_origins(cls, v: str | list[str]) -> list[str]:
-        if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",") if origin.strip()]
-        return v
+    @computed_field
+    @property
+    def CORS_ORIGINS(self) -> list[str]:  # noqa: N802
+        raw = self.CORS_ORIGINS_RAW
+        try:
+            parsed = json.loads(raw)
+            if isinstance(parsed, list):
+                return parsed
+        except (json.JSONDecodeError, ValueError):
+            pass
+        return [o.strip() for o in raw.split(",") if o.strip()]
 
 
 settings = Settings()
