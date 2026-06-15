@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 import redis.asyncio as redis
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 
 from surfaced.auth.routers import router as auth_router
 from surfaced.core.config import settings
@@ -25,8 +26,11 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    app.include_router(auth_router, prefix=settings.API_V1_STR)
+    @app.get("/health", include_in_schema=False)
+    async def health() -> JSONResponse:
+        return JSONResponse({"status": "ok"})
 
+    app.include_router(auth_router, prefix=settings.API_V1_STR)
     app.include_router(jobs_router, prefix=settings.API_V1_STR)
 
     return app
