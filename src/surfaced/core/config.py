@@ -49,6 +49,11 @@ class Settings(BaseSettings):
 
     SENTRY_DSN: str = ""
 
+    TELEGRAM_API_ID: int = 0
+    TELEGRAM_API_HASH: str = ""
+    TELEGRAM_SESSION_STRING: str = ""
+    TELEGRAM_CHANNELS: list[str] = ["devkz_jobs", "workitkz"]
+
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
 
     @field_validator("CORS_ORIGINS", mode="before")

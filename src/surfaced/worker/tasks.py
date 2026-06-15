@@ -5,6 +5,7 @@ import structlog
 from surfaced.core.database import async_session_factory
 from surfaced.core.logging import setup_logging
 from surfaced.scrapers.hh import enrich_vacancies, load_jobs, scrape_hh_vacancies
+from surfaced.scrapers.telegram import load_telegram_jobs, scrape_telegram_channels
 from surfaced.worker.celery_app import celery_app
 
 setup_logging()
@@ -49,3 +50,28 @@ def task_enrich_hh_vacancies():
             await enrich_vacancies(session)
 
     asyncio.run(process_enrich())
+
+
+@celery_app.task(name="scrape_telegram_channels", bind=True, max_retries=3)
+def task_scrape_telegram_channels(self) -> int | None:
+
+    async def scrape_pipeline():
+        try:
+            jobs_data = await scrape_telegram_channels()
+        except Exception as e:
+            return e, None
+
+        if not jobs_data:
+            return None, 0
+
+        async with async_session_factory() as session:
+            result = await load_telegram_jobs(session, jobs_data)
+            logger.info("telegram_load_complete", loaded=result)
+            return None, result
+
+    error, result = asyncio.run(scrape_pipeline())
+
+    if error is not None:
+        raise self.retry(exc=error, countdown=60)
+
+    return result

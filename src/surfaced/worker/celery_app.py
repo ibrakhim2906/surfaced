@@ -15,5 +15,12 @@ celery_app.conf.beat_schedule = {
         "task": "scrape_and_load_hh_vacancies",
         "schedule": crontab(hour=0, minute=0),
     },
-    "enrich_hh_vacancies": {"task": "enrich_hh_vacancies", "schedule": 1800},
+    "enrich_hh_vacancies": {
+        "task": "enrich_hh_vacancies",
+        "schedule": 1800,
+    },
+    "scrape_telegram_channels": {
+        "task": "scrape_telegram_channels",
+        "schedule": crontab(hour="*/6", minute=0),
+    },
 }
