@@ -9,7 +9,7 @@ without needing a persistent Celery worker.
 import asyncio
 
 from surfaced.core.database import async_session_factory
-from surfaced.scrapers.hh import load_jobs, scrape_hh_vacancies
+from surfaced.scrapers.hh import enrich_vacancies, load_jobs, scrape_hh_vacancies
 from surfaced.scrapers.telegram import load_telegram_jobs, scrape_telegram_channels
 
 
@@ -21,6 +21,10 @@ async def main() -> None:
         async with async_session_factory() as session:
             loaded = await load_jobs(session, hh_jobs)
             print(f"  loaded {loaded} HH jobs")
+
+    print("Enriching HeadHunter jobs (full descriptions + tech stack)...")
+    async with async_session_factory() as session:
+        await enrich_vacancies(session)
 
     print("Scraping Telegram...")
     tg_jobs = await scrape_telegram_channels()

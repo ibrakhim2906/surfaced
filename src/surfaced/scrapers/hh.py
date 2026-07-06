@@ -187,17 +187,24 @@ def _get_stack(description: str, skills: list[str]):
 
 
 async def enrich_vacancies(session: AsyncSession):
+    """Fill in full descriptions + tech stack for HH jobs still on the fallback text.
 
-    query = (
-        select(Job)
-        .where(
-            Job.description.like("%Полное описание будет загружено в ближайшее время%")
+    Fetches the OAuth token once and reuses it across all batches — HH rate-limits
+    token issuance, so fetching a fresh token per batch trips a 403.
+    """
+
+    def _fallback_query():
+        return (
+            select(Job)
+            .where(
+                Job.description.like(
+                    "%Полное описание будет загружено в ближайшее время%"
+                )
+            )
+            .limit(hh.PAGE_COUNT)
         )
-        .limit(hh.PAGE_COUNT)
-    )
 
-    result = await session.execute(query)
-
+    result = await session.execute(_fallback_query())
     jobs = result.scalars().all()
 
     if not jobs:
@@ -213,25 +220,29 @@ async def enrich_vacancies(session: AsyncSession):
 
         headers = {"Authorization": f"Bearer {token}", "User-Agent": USER_AGENT}
 
-        for job in jobs:
-            url = f"https://api.hh.kz/vacancies/{job.source_id}"
+        while jobs:
+            for job in jobs:
+                url = f"https://api.hh.kz/vacancies/{job.source_id}"
 
-            try:
-                response = await client.get(url, headers=headers)
+                try:
+                    response = await client.get(url, headers=headers)
 
-                response.raise_for_status()
+                    response.raise_for_status()
 
-                data = response.json()
+                    data = response.json()
 
-                description = data.get("description", "")
-                job.description = _strip_tags(description)
+                    description = data.get("description", "")
+                    job.description = _strip_tags(description)
 
-                skills = [s["name"] for s in data.get("key_skills", [])]
-                job.stack = _get_stack(job.description, skills)
+                    skills = [s["name"] for s in data.get("key_skills", [])]
+                    job.stack = _get_stack(job.description, skills)
 
-            except Exception:
-                continue
+                except Exception:
+                    continue
 
-            await asyncio.sleep(1)
+                await asyncio.sleep(1)
 
-        await session.commit()
+            await session.commit()
+
+            result = await session.execute(_fallback_query())
+            jobs = result.scalars().all()
