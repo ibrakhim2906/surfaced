@@ -1,0 +1,35 @@
+name: Scheduled scrape
+# Refreshes the production database with new HH + Telegram jobs.
+# Replaces a persistent Celery worker (not available on Render's free tier).
+
+on:
+  schedule:
+    - cron: "0 */6 * * *" # every 6 hours
+  workflow_dispatch: {} # allow manual runs from the Actions tab
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: src
+      ENVIRONMENT: production
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      POSTGRES_SERVER: ${{ secrets.POSTGRES_SERVER }}
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      REDIS_URL: redis://localhost:6379
+      HH_CLIENT_ID: ${{ secrets.HH_CLIENT_ID }}
+      HH_CLIENT_SECRET: ${{ secrets.HH_CLIENT_SECRET }}
+      HH_APPLICATION_TOKEN: ${{ secrets.HH_APPLICATION_TOKEN }}
+      YOUR_EMAIL: ${{ secrets.YOUR_EMAIL }}
+      TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
+      TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+      TELEGRAM_SESSION_STRING: ${{ secrets.TELEGRAM_SESSION_STRING }}
+      TELEGRAM_CHANNELS: '["devkz_jobs","workitkz"]'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --no-dev
+      - run: uv run python scripts/scrape.py

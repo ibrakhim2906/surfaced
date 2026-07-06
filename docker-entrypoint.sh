@@ -1,8 +1,10 @@
 #!/bin/sh
 set -e
 
-echo "Running database migrations..."
-alembic upgrade head
+if [ "${RUN_MIGRATIONS:-1}" = "1" ]; then
+  echo "Running database migrations..."
+  alembic upgrade head
+fi
 
 echo "Starting application..."
 exec "$@"

@@ -1,0 +1,59 @@
+# Render Blueprint — one-click, reproducible deploy of the Surfaced backend.
+# Deploy: Render Dashboard -> New -> Blueprint -> pick this repo -> Apply.
+# Provisions: Postgres + Key Value (Redis) + the FastAPI web service, with all
+# database/cache env vars wired automatically. Only CORS_ORIGINS is entered by hand.
+
+databases:
+  - name: surfaced-db
+    plan: free
+    databaseName: surfaced
+    user: surfaced
+
+services:
+  - type: keyvalue
+    name: surfaced-redis
+    plan: free
+    ipAllowList: [] # internal-only access from other Render services
+
+  - type: web
+    name: surfaced-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: RUN_MIGRATIONS
+        value: "1"
+      - key: ENVIRONMENT
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: POSTGRES_SERVER
+        fromDatabase:
+          name: surfaced-db
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: surfaced-db
+          property: port
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: surfaced-db
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: surfaced-db
+          property: password
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: surfaced-db
+          property: database
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: surfaced-redis
+          property: connectionString
+      # Set this to your Vercel frontend URL after the frontend is deployed,
+      # e.g. https://surfaced-two.vercel.app
+      - key: CORS_ORIGINS
+        sync: false
