@@ -96,11 +96,16 @@ async def get_multi_jobs(
         JobResponse.model_validate(item).model_dump(mode="json") for item in items
     ]
 
-    payload = create_cache_payload(
-        serialized_items=serialized_items, next_cursor=next_cursor, has_more=has_more
-    )
+    # Never cache empty result sets: an empty DB (or a mid-scrape moment) would
+    # otherwise poison the cache and keep serving "no jobs" for the full TTL.
+    if serialized_items:
+        payload = create_cache_payload(
+            serialized_items=serialized_items,
+            next_cursor=next_cursor,
+            has_more=has_more,
+        )
 
-    await set_cache(redis_client, cache_key, json.dumps(payload), ttl=JOB_CACHE_TTL)
+        await set_cache(redis_client, cache_key, json.dumps(payload), ttl=JOB_CACHE_TTL)
 
     return (serialized_items, next_cursor, has_more)
 
