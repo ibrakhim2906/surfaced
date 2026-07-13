@@ -38,9 +38,9 @@ async def login(
 
 @router.post("/token/refresh")
 async def refresh_token(
-    token_in: TokenRefresh, redis_client: RedisClient
+    db: DbSession, token_in: TokenRefresh, redis_client: RedisClient
 ) -> TokenResponse:
-    return await service.refresh_token(redis_client, token_in)
+    return await service.refresh_token(db, redis_client, token_in)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)

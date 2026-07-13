@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class UserBase(BaseModel):
@@ -9,7 +9,7 @@ class UserBase(BaseModel):
 
 
 class UserRegister(UserBase):
-    password: str
+    password: str = Field(min_length=8)
 
 
 class UserLogin(BaseModel):
@@ -23,7 +23,7 @@ class TokenRefresh(BaseModel):
 
 class PasswordChange(BaseModel):
     old_password: str
-    new_password: str
+    new_password: str = Field(min_length=8)
 
 
 class UserResponse(BaseModel):

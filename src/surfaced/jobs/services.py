@@ -128,6 +128,17 @@ async def me_save_job(
     db: AsyncSession, current_user: CurrentUser, saved_job: SavedJobRequest
 ):
 
+    result = await db.execute(
+        select(Job).where(Job.id == saved_job.job_id, ~Job.is_archived)
+    )
+
+    job = result.scalar_one_or_none()
+
+    if not job:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="this job do not exist"
+        )
+
     new_save = SavedJob(user_id=current_user.id, job_id=saved_job.job_id)
     db.add(new_save)
 

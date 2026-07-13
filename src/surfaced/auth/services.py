@@ -12,6 +12,7 @@ from surfaced.auth.exceptions import (
     InvalidCredentialsException,
     TokenExpiredException,
     TokenInvalidException,
+    UserNotFoundException,
 )
 from surfaced.auth.models import User
 from surfaced.auth.schemas import (
@@ -73,7 +74,9 @@ async def login_user(db: AsyncSession, user_in: UserLogin) -> TokenResponse:
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
 
-async def refresh_token(redis_client: Redis, token_in: TokenRefresh) -> TokenResponse:
+async def refresh_token(
+    db: AsyncSession, redis_client: Redis, token_in: TokenRefresh
+) -> TokenResponse:
     try:
         payload = decode_token(token_in.refresh_token)
     except ExpiredSignatureError:
@@ -85,13 +88,24 @@ async def refresh_token(redis_client: Redis, token_in: TokenRefresh) -> TokenRes
         raise TokenInvalidException
 
     is_blocked = await get_cache(redis_client, f"blocklist:{payload.jti}")
-
     if is_blocked:
         raise TokenInvalidException
 
+    result = await db.execute(select(User).where(User.email == payload.sub))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise UserNotFoundException
+    if not user.is_active:
+        raise InactiveUserException
+
+    now = datetime.now(UTC)
+    seconds_left = int((payload.exp - now).total_seconds())
+    if seconds_left > 0:
+        await set_cache(redis_client, f"blocklist:{payload.jti}", "revoked", seconds_left)
+
     return TokenResponse(
-        access_token=create_access_token(subject=payload.sub),
-        refresh_token=token_in.refresh_token,
+        access_token=create_access_token(subject=user.email),
+        refresh_token=create_refresh_token(subject=user.email),
         token_type=TOKEN_TYPE_BEARER,
     )
 
@@ -130,6 +144,4 @@ async def logout_user(redis_client: Redis, token_in: TokenRefresh) -> None:
     seconds_left = int(time_remaining.total_seconds())
 
     if seconds_left > 0:
-        await set_cache(
-            redis_client, f"blocklist:{payload.jti}", "revoked", seconds_left
-        )
+        await set_cache(redis_client, f"blocklist:{payload.jti}", "revoked", seconds_left)

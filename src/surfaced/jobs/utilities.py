@@ -7,10 +7,10 @@ from surfaced.jobs.schemas import JobFilters
 def create_cache_key(filters: JobFilters) -> str:
     return (
         f"jobs:search:"
-        f"q={filters.q or 'all'}"
-        f"loc={filters.location or 'all'}"
-        f"src={filters.source or 'all'}"
-        f"lim={filters.limit or 20}"
+        f"q={filters.q or 'all'}:"
+        f"loc={filters.location or 'all'}:"
+        f"src={filters.source or 'all'}:"
+        f"lim={filters.limit or 20}:"
         f"cur={filters.cursor or 'none'}"
     )
 
