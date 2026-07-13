@@ -1,6 +1,9 @@
+
 # Surfaced
 
 Job board aggregating tech positions in Kazakhstan from HeadHunter.kz and Telegram channels.
+
+<img width="2475" height="1355" alt="Screenshot 2026-07-13 at 21 50 43" src="https://github.com/user-attachments/assets/e84262c1-63a7-41e3-9a91-b16e823fac09" />
 
 ## Stack
 
